@@ -1,7 +1,7 @@
 // partial evaluation
 var fs = require("fs");
 var babel = require("babel-core");
-var suslu = require("./suslu");
+var babelPlugin = require("./babel-plugin");
 
 // read the filename from the command line arguments
 var fileName = process.argv[2];
@@ -15,7 +15,7 @@ fs.readFile(fileName, function(err, data) {
 
   // use our plugin to transform the source
   var out = babel.transform(src, {
-    plugins: [suslu]
+    plugins: [babelPlugin]
   });
 
   console.log("Partially Evaluated code:");
