@@ -66,10 +66,10 @@ module.exports = function(babel) {
             });
             var qtest = path.node.test;
             for (var i = 0; i < constraintlist.length; i++) {
-              qtest = t.LogicalExpression("&&", constraintlist[i], qtest);
+              qtest = types.LogicalExpression("&&", constraintlist[i], qtest);
             }
             var tmpCode = babel.transformFromAst(
-              t.file(t.program([t.expressionStatement(qtest)]))
+              types.file(types.program([types.expressionStatement(qtest)]))
             );
 
             var check_SAT = symExec.solvePathConstraint(tmpCode.code);
