@@ -1,19 +1,12 @@
 {
-  "name": "task1",
-  "version": "1.0.0",
-  "description": "",
-  "main": "task1.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "name": "spejs",
+  "main": "cli.js",
   "dependencies": {
+    "babel-core": "^6.26.3",
     "cli-table": "^0.3.1",
-    "escodegen": "^1.9.0",
-    "esprima": "^4.0.0",
-    "estraverse": "^4.2.0",
-    "underscore": "^1.8.3"
+    "escodegen": "^1.12.0",
+    "esprima": "^4.0.1",
+    "estraverse": "^4.3.0",
+    "underscore": "^1.9.1"
   }
 }

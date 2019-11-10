@@ -1,14 +1,13 @@
-
 // partial evaluation
-var fs = require('fs');
-var babel = require('babel-core');
-var suslu = require('./suslu');
+var fs = require("fs");
+var babel = require("babel-core");
+var suslu = require("./suslu");
 
 // read the filename from the command line arguments
 var fileName = process.argv[2];
 
 // read the code from this file
-fs.readFile(fileName, function (err, data) {
+fs.readFile(fileName, function(err, data) {
   if (err) throw err;
 
   // convert from a buffer to a string
@@ -23,11 +22,9 @@ fs.readFile(fileName, function (err, data) {
   console.log(out.code);
   // print the generated code to a new file
   var outputpath = fileName.split(".", 1) + "_out.js";
-  fs.writeFile(outputpath, out.code, function (err) {
+  fs.writeFile(outputpath, out.code, function(err) {
     if (err) {
       return console.log(err);
     }
-
-  })
+  });
 });
-
