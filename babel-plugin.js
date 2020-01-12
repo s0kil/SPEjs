@@ -10,8 +10,8 @@ module.exports = function(babel) {
     tmpPath: "/tmp"
   };
 
-  var ws = new Set();
-  var env = {
+  let ws = new Set();
+  const env = {
     q: { value: null, type: "Int" },
     x: { value: null, type: "Int" },
     y: { value: 3, type: "Int" },
@@ -21,17 +21,19 @@ module.exports = function(babel) {
     b: { value: null, type: "Int" },
     k: { value: null, type: "abstract" }
   };
-  var symExec = new SymbolicExecution(env, solver);
+  let symExec = new SymbolicExecution(env, solver);
 
-  var skipPath,
+  let skipPath,
     iflvl = 0,
     whilvl = 0;
+
   function opPath(res, op, path) {
-    var bop = ["<", ">", "<=", ">=", "!=", "=="];
-    if (bop.indexOf(op) == -1)
+    let bop = ["<", ">", "<=", ">=", "!=", "=="];
+    if (bop.indexOf(op) === -1)
       path.replaceWith(types.NumericLiteral(res.value));
     else path.replaceWith(types.BooleanLiteral(res.value));
   }
+
   return {
     visitor: {
       IfStatement: {
@@ -39,16 +41,16 @@ module.exports = function(babel) {
           iflvl++;
         },
         exit(path) {
-          if (path.node.test.type == "BooleanLiteral") {
-            if (path.node.test.value == true) {
-              if (path.node.consequent.type == "BlockStatement") {
+          if (path.node.test.type === "BooleanLiteral") {
+            if (path.node.test.value === true) {
+              if (path.node.consequent.type === "BlockStatement") {
                 path.replaceWithMultiple(path.node.consequent.body);
               } else {
                 path.replaceWith(path.node.consequent);
               }
             } else {
               if (path.node.alternate != null) {
-                if (path.node.alternate.type == "BlockStatement") {
+                if (path.node.alternate.type === "BlockStatement") {
                   path.replaceWithMultiple(path.node.alternate.body);
                 } else {
                   path.replaceWith(path.node.alternate);
@@ -56,28 +58,28 @@ module.exports = function(babel) {
               } else path.remove();
             }
           } else {
-            var constraintlist = [];
+            let constraintList = [];
             path.get("test").traverse({
               Identifier(path) {
                 if (env[path.node.name].constraint != null) {
-                  constraintlist.push(env[path.node.name].constraint);
+                  constraintList.push(env[path.node.name].constraint);
                 }
               }
             });
-            var qtest = path.node.test;
-            for (var i = 0; i < constraintlist.length; i++) {
-              qtest = types.LogicalExpression("&&", constraintlist[i], qtest);
+            let qtest = path.node.test;
+            for (let i = 0; i < constraintList.length; i++) {
+              qtest = types.LogicalExpression("&&", constraintList[i], qtest);
             }
-            var tmpCode = babel.transformFromAst(
+            let tmpCode = babel.transformFromAst(
               types.file(types.program([types.expressionStatement(qtest)]))
             );
 
-            var check_SAT = symExec.solvePathConstraint(tmpCode.code);
+            let check_SAT = symExec.solvePathConstraint(tmpCode.code);
             if (check_SAT.err) {
-              var errorMessage =
+              let errorMessage =
                 check_SAT.err instanceof Error
                   ? check_SAT.err.message
-                  : "Uknown error";
+                  : "Unknown error";
               symExec.response.errors.push(errorMessage);
               console.log("error " + check_SAT.err.message);
             } else {
@@ -85,7 +87,7 @@ module.exports = function(babel) {
                 // test unsatisfied,
                 console.log("test unsatisfied");
                 if (path.node.alternate != null) {
-                  if (path.node.alternate.type == "BlockStatement") {
+                  if (path.node.alternate.type === "BlockStatement") {
                     path.replaceWithMultiple(path.node.alternate.body);
                   } else {
                     path.replaceWith(path.node.alternate);
@@ -101,10 +103,10 @@ module.exports = function(babel) {
       },
       ReturnStatement: {
         exit(path) {
-          var rname = path.node.argument.name;
+          let rname = path.node.argument.name;
           if (env[rname] != null && env[rname].value != null) {
             ws.add(path.parentPath.parentPath.node.id.name);
-            if (env[rname].type == "BooleanLiteral")
+            if (env[rname].type === "BooleanLiteral")
               path.parentPath.parentPath.replaceWith(
                 types.AssignmentExpression(
                   "=",
@@ -134,7 +136,7 @@ module.exports = function(babel) {
         },
         exit(path) {
           whilvl--;
-          if (path.node.test.type == "BinaryExpression") {
+          if (path.node.test.type === "BinaryExpression") {
             if (env[path.node.test.left.name] != null)
               env[path.node.test.left.name].constraint = types.unaryExpression(
                 "!",
@@ -143,17 +145,16 @@ module.exports = function(babel) {
           }
         }
       },
-
       AssignmentExpression: {
         exit(path) {
-          if (iflvl == 0) {
+          if (iflvl === 0) {
             if (
-              path.node.right.type == "NumericLiteral" ||
-              path.node.right.type == "BooleanLiteral"
+              path.node.right.type === "NumericLiteral" ||
+              path.node.right.type === "BooleanLiteral"
             ) {
               if (env[path.node.left.name] != null) {
                 env[path.node.left.name].value = path.node.right.value;
-                if (path.node.right.type == "BooleanLiteral")
+                if (path.node.right.type === "BooleanLiteral")
                   env[path.node.left.name].type = "Bool";
                 else env[path.node.left.name].type = "Int";
               }
@@ -165,7 +166,7 @@ module.exports = function(babel) {
             }
             path.skip();
           }
-          if (whilvl != 0) {
+          if (whilvl !== 0) {
             if (env[path.node.left.name] != null) {
               env[path.node.left.name].value = null;
             }
@@ -174,7 +175,7 @@ module.exports = function(babel) {
       },
       /*VariableDeclaration: {
 				exit(path) {
-					for (var i of path.node.declarations) {
+					for (let i of path.node.declarations) {
 						if (i.init == null) {
 							env[i.id.name] = { value: null };
 						}
@@ -197,7 +198,7 @@ module.exports = function(babel) {
         exit(path) {
           if (path.node.init == null) {
             env[path.node.id.name] = { value: null, type: "Int" };
-          } else if (path.node.init.type == "CallExpression") {
+          } else if (path.node.init.type === "CallExpression") {
             env[path.node.id.name] = { value: null, type: "Int" };
             //path.node.declarations.splice(path.node.declarations.indexOf(i), 1);
           } else {
@@ -213,21 +214,19 @@ module.exports = function(babel) {
           path.skip();
         }
       },
-
       VariableDeclaration: {
         exit(path) {
-          if (path.node.declarations.length == 0) path.remove();
-
+          if (path.node.declarations.length === 0) path.remove();
           path.skip();
         }
       },
       LogicalExpression: {
         exit(path) {
-          var lval = path.node.left;
-          var rval = path.node.right;
-          var op = path.node.operator;
-          var res;
-          if (lval.type == "BooleanLiteral" && rval.type == "BooleanLiteral") {
+          let lval = path.node.left;
+          let rval = path.node.right;
+          let op = path.node.operator;
+          let res;
+          if (lval.type === "BooleanLiteral" && rval.type === "BooleanLiteral") {
             res = path.evaluate();
             path.replaceWith(types.BooleanLiteral(res.value));
           }
@@ -236,23 +235,23 @@ module.exports = function(babel) {
       },
       BinaryExpression: {
         exit(path) {
-          var lval = path.node.left;
-          var rval = path.node.right;
-          var op = path.node.operator;
-          var res;
-          if (lval.type == "NumericLiteral" && rval.type == "NumericLiteral") {
+          let lval = path.node.left;
+          let rval = path.node.right;
+          let op = path.node.operator;
+          let res;
+          if (lval.type === "NumericLiteral" && rval.type === "NumericLiteral") {
             res = path.evaluate();
             opPath(res, op, path);
           } else if (
-            lval.type == "BooleanLiteral" &&
-            rval.type == "BooleanLiteral"
+            lval.type === "BooleanLiteral" &&
+            rval.type === "BooleanLiteral"
           ) {
             res = path.evaluate();
             if (res.value) path.replaceWith(types.BooleanLiteral(true));
             else path.replaceWith(types.BooleanLiteral(false));
           } else if (
-            lval.type == "NumericLiteral" &&
-            rval.type == "Identifier"
+            lval.type === "NumericLiteral" &&
+            rval.type === "Identifier"
           ) {
             if (env[rval.name] != null && env[rval.name].value != null) {
               rval.value = env[rval.name].value;
@@ -261,8 +260,8 @@ module.exports = function(babel) {
               opPath(res, op, path);
             }
           } else if (
-            lval.type == "Identifier" &&
-            rval.type == "NumericLiteral"
+            lval.type === "Identifier" &&
+            rval.type === "NumericLiteral"
           ) {
             if (env[lval.name] != null && env[lval.name].value != null) {
               lval.value = env[lval.name].value;
@@ -270,7 +269,7 @@ module.exports = function(babel) {
               res = path.evaluate();
               opPath(res, op, path);
             }
-          } else if (lval.type == "Identifier" && rval.type == "Identifier") {
+          } else if (lval.type === "Identifier" && rval.type === "Identifier") {
             if (
               env[lval.name] != null &&
               env[lval.name].value != null &&

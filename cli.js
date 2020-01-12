@@ -1,28 +1,28 @@
 // partial evaluation
-var fs = require("fs");
-var babel = require("babel-core");
-var babelPlugin = require("./babel-plugin");
+const fs = require("fs");
+const babel = require("babel-core");
+const babelPlugin = require("./babel-plugin");
 
 // read the filename from the command line arguments
-var fileName = process.argv[2];
+let fileName = process.argv[2];
 
 // read the code from this file
 fs.readFile(fileName, function(err, data) {
   if (err) throw err;
 
   // convert from a buffer to a string
-  var src = data.toString();
+  let src = data.toString();
 
   // use our plugin to transform the source
-  var out = babel.transform(src, {
+  let out = babel.transform(src, {
     plugins: [babelPlugin]
   });
 
   console.log("Partially Evaluated code:");
   console.log(out.code);
   // print the generated code to a new file
-  var outputpath = fileName.split(".", 1) + "_out.js";
-  fs.writeFile(outputpath, out.code, function(err) {
+  let outputPath = fileName.split(".", 1) + "_out.js";
+  fs.writeFile(outputPath, out.code, function(err) {
     if (err) {
       return console.log(err);
     }

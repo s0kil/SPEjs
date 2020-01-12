@@ -1,9 +1,7 @@
-"use strict";
+const esprima = require("esprima");
+const esTraverse = require("estraverse");
 
-var esprima = require("esprima");
-var estraverse = require("estraverse");
-
-var supportedTypes = [
+const supportedTypes = [
   {
     type: "Int",
     defaultValue: 0
@@ -21,22 +19,23 @@ var supportedTypes = [
     defaultValue: ""
   }
 ];
+
 function parseFunctionSignature(fName, fParameters, uParameters) {
-  var sizeF = fParameters.length;
-  var sizeU = Object.keys(uParameters).length;
-  var ret = {
+  let sizeF = fParameters.length;
+  let sizeU = Object.keys(uParameters).length;
+  let ret = {
     errors: [],
     parameters: {}
   };
-  var errorPrefix =
+  let errorPrefix =
     'Error while parsing signature of function "' + fName + '": ';
   if (sizeF !== sizeU) {
     ret.errors.push(errorPrefix + "different signatures of the function");
     return ret;
   }
-  var paramName;
-  var paramValue;
-  for (var k = 0; k < sizeF; k++) {
+  let paramName;
+  let paramValue;
+  for (let k = 0; k < sizeF; k++) {
     paramName =
       fParameters[k].name !== undefined ? fParameters[k].name : "unknown";
     if (fParameters[k].type !== "Identifier") {
@@ -66,8 +65,8 @@ function parseFunctionSignature(fName, fParameters, uParameters) {
       continue;
     }
     if (uParameters[paramName].hasOwnProperty("value")) {
-      var typeofValueParam = typeof uParameters[paramName].value;
-      var typeofTypeParam = typeof getDefaultValue(uParameters[paramName].type);
+      let typeofValueParam = typeof uParameters[paramName].value;
+      let typeofTypeParam = typeof getDefaultValue(uParameters[paramName].type);
       if (typeofValueParam !== typeofTypeParam) {
         ret.errors.push(
           errorPrefix +
@@ -89,9 +88,10 @@ function parseFunctionSignature(fName, fParameters, uParameters) {
   return ret;
 }
 exports.parseFunctionSignature = parseFunctionSignature;
+
 function getTestCase(parameters) {
-  var params = {};
-  for (var pName in parameters) {
+  let params = {};
+  for (let pName in parameters) {
     if (parameters.hasOwnProperty(pName)) {
       params[pName] = parameters[pName].value;
     }
@@ -99,9 +99,10 @@ function getTestCase(parameters) {
   return params;
 }
 exports.getTestCase = getTestCase;
+
 function getActualParameters(parameters) {
-  var parametersValues = [];
-  for (var pName in parameters) {
+  let parametersValues = [];
+  for (let pName in parameters) {
     if (parameters.hasOwnProperty(pName)) {
       parametersValues.push(parameters[pName].value);
     }
@@ -109,8 +110,9 @@ function getActualParameters(parameters) {
   return parametersValues.join(", ");
 }
 exports.getActualParameters = getActualParameters;
+
 function getDefaultValue(type) {
-  for (var k = 0; k < supportedTypes.length; k++) {
+  for (let k = 0; k < supportedTypes.length; k++) {
     if (type === supportedTypes[k].type) {
       return supportedTypes[k].defaultValue;
     }
@@ -118,21 +120,23 @@ function getDefaultValue(type) {
   return null;
 }
 exports.getDefaultValue = getDefaultValue;
+
 function typeIsSupported(type) {
-  for (var k = 0; k < supportedTypes.length; k++) {
+  for (let k = 0; k < supportedTypes.length; k++) {
     if (type === supportedTypes[k].type) {
       return true;
     }
   }
   return false;
 }
+
 function getAST(instruction) {
-  var instructionAST;
-  var illegalStatement = false;
+  let instructionAST;
+  let illegalStatement = false;
   try {
     instructionAST = esprima.parse(instruction);
   } catch (e) {
-    var statementInstruction =
+    let statementInstruction =
       "function leenaFunc(){for(;;){" + instruction + "}}";
     try {
       instructionAST = esprima.parse(statementInstruction);
@@ -151,6 +155,7 @@ function getAST(instruction) {
   return instructionAST;
 }
 exports.getAST = getAST;
+
 function isBranch(node) {
   if (!node.hasOwnProperty("type")) {
     return false;
@@ -162,8 +167,9 @@ function isBranch(node) {
   );
 }
 exports.isBranch = isBranch;
+
 function statementInsideTable(statementKey, table) {
-  for (var k = 0; k < table.length; k++) {
+  for (let k = 0; k < table.length; k++) {
     if (table[k].statementKey === statementKey) {
       return k;
     }
@@ -171,12 +177,13 @@ function statementInsideTable(statementKey, table) {
   return -1;
 }
 exports.statementInsideTable = statementInsideTable;
+
 function addStatementInTable(statementKey, branchIndex, table) {
-  var index;
+  let index;
   if ((index = statementInsideTable(statementKey, table)) !== -1) {
     table[index].branchesIndexes.push(branchIndex);
   } else {
-    var newEntry;
+    let newEntry;
     newEntry = {};
     newEntry.statementKey = statementKey;
     newEntry.branchesIndexes = [branchIndex];
@@ -184,9 +191,10 @@ function addStatementInTable(statementKey, branchIndex, table) {
   }
 }
 exports.addStatementInTable = addStatementInTable;
+
 function conditionIsSymbolic(conditionAST, S, parameters) {
-  var isSymbolic = false;
-  estraverse.traverse(conditionAST, {
+  let isSymbolic = false;
+  esTraverse.traverse(conditionAST, {
     enter: function(node) {
       if (node.type === "CallExpression") {
         this.skip();
@@ -198,16 +206,16 @@ function conditionIsSymbolic(conditionAST, S, parameters) {
           isSymbolic = true;
           this.break();
         } else {
-          var prop;
-          var symbolicContent;
+          let prop;
+          let symbolicContent;
           prop = S.hasProperty(node.name);
           if (prop.hasProperty) {
             symbolicContent = prop.content;
             if (symbolicContent !== undefined) {
-              var astSymbolicContent;
+              let astSymbolicContent;
               try {
                 astSymbolicContent = esprima.parse(symbolicContent);
-                estraverse.traverse(astSymbolicContent, {
+                esTraverse.traverse(astSymbolicContent, {
                   enter: function(node) {
                     if (node.type === "CallExpression") {
                       this.skip();

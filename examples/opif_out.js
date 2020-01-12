@@ -1,4 +1,4 @@
 var t = 1,
-    result;
+  result;
 
 result = 139;

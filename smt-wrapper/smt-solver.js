@@ -1,11 +1,9 @@
-"use strict";
+const path = require("path");
+const childProcess = require("child_process");
+const _ = require("underscore");
+const utils = require("../utils");
 
-var childProcess = require("child_process");
-var path = require("path");
-var _ = require("underscore");
-var utils = require("../utils");
-
-var SMTSolver = (function() {
+const SMTSolver = (function() {
   function SMTSolver(name, path, tempPath) {
     if (SMTSolver.availableSolvers.indexOf(name) === -1) {
       throw new Error('Unknown solver "' + name + '"');
@@ -21,7 +19,7 @@ var SMTSolver = (function() {
   }
   SMTSolver.prototype.run = function(expression) {
     utils.writeOnFile(this.pathFile, expression); // create temporary smt2 file
-    var cbExecuteExpression = this.executeExpression(this.pathFile);
+    let cbExecuteExpression = this.executeExpression(this.pathFile);
     utils.removeFile(this.pathFile); // delete temporary smt2 file
     if (cbExecuteExpression.err) {
       return { err: cbExecuteExpression.err, res: null };
@@ -30,22 +28,22 @@ var SMTSolver = (function() {
     }
   };
   SMTSolver.prototype.executeExpression = function(pathFile) {
-    var exec;
-    var args;
-    var result = "";
-    var z3Err;
-    var appPath = this.path;
+    let exec;
+    let args;
+    let result = "";
+    let z3Err;
+    let appPath = this.path;
     args = ["-smt2", pathFile];
     exec = childProcess.spawnSync(appPath, args, { encoding: "utf8" });
     result += exec.stdout.toString().trim() + "\n";
     return { err: null, res: result };
   };
   SMTSolver.prototype.parseResponse = function(response) {
-    var ret = {
+    let ret = {
       isSAT: false,
       values: {}
     };
-    var tokensResponse = response.match(/\"(.+)\"|\S+/g);
+    let tokensResponse = response.match(/"(.+)"|\S+/g);
     ret.isSAT = this.isSAT(tokensResponse);
     if (ret.isSAT) {
       ret.values = this.getValues(tokensResponse);
@@ -53,11 +51,11 @@ var SMTSolver = (function() {
     return ret;
   };
   SMTSolver.prototype.isSAT = function(tokens) {
-    var index;
+    let index;
     if (!_.isArray(tokens)) {
       return false;
     }
-    for (var k = 0; k < tokens.length; k++) {
+    for (let k = 0; k < tokens.length; k++) {
       index = SMTSolver.SMTSatisfiabilityResponses.indexOf(
         tokens[k].toLowerCase()
       );
@@ -68,15 +66,15 @@ var SMTSolver = (function() {
     return false;
   };
   SMTSolver.prototype.getValues = function(tokens) {
-    var obj = {};
-    var t = tokens.slice(0);
-    var identifier;
-    var value;
+    let obj = {};
+    let t = tokens.slice(0);
+    let identifier;
+    let value;
     if (this.name === "cvc4" || this.name === "z3") {
-      for (var k = 1; k < t.length; k++) {
+      for (let k = 1; k < t.length; k++) {
         t[k] = t[k].replace(/\(/g, "").replace(/\)/g, "");
       }
-      for (var k = 1; k < t.length; k++) {
+      for (let k = 1; k < t.length; k++) {
         if (t[k].match(/[a-zA-Z0-9_]/) !== null) {
           identifier = t[k];
           if (++k < t.length) {
@@ -101,10 +99,10 @@ var SMTSolver = (function() {
     return obj;
   };
   SMTSolver.prototype.setPathFile = function() {
-    var maxIterations = 100;
-    var pathFile;
-    var randomName;
-    for (var k = 0; k < maxIterations; k++) {
+    let maxIterations = 100;
+    let pathFile;
+    let randomName;
+    for (let k = 0; k < maxIterations; k++) {
       randomName = Math.random()
         .toString(36)
         .substring(10);

@@ -1,19 +1,21 @@
-"use strict";
+const assert = require("assert");
+const esprima = require("esprima");
+const esCodeGen = require("escodegen");
+const esTraverse = require("estraverse");
+const _ = require("underscore");
 
-var assert = require("assert");
-var esprima = require("esprima");
-var escodegen = require("escodegen");
-var estraverse = require("estraverse");
-var _ = require("underscore");
-
-var ExpressionType;
+let ExpressionType;
 (function(ExpressionType) {
-  ExpressionType[(ExpressionType["ArrayExpression"] = 0)] = "ArrayExpression";
-  ExpressionType[(ExpressionType["ArrowExpression"] = 1)] = "ArrowExpression";
+  ExpressionType[(ExpressionType["ArrayExpression"] = 0)] =
+    "ArrayExpression";
+  ExpressionType[(ExpressionType["ArrowExpression"] = 1)] =
+    "ArrowExpression";
   ExpressionType[(ExpressionType["AssignmentExpression"] = 2)] =
     "AssignmentExpression";
-  ExpressionType[(ExpressionType["BinaryExpression"] = 3)] = "BinaryExpression";
-  ExpressionType[(ExpressionType["CallExpression"] = 4)] = "CallExpression";
+  ExpressionType[(ExpressionType["BinaryExpression"] = 3)] =
+    "BinaryExpression";
+  ExpressionType[(ExpressionType["CallExpression"] = 4)] =
+    "CallExpression";
   ExpressionType[(ExpressionType["ComprehensionExpression"] = 5)] =
     "ComprehensionExpression";
   ExpressionType[(ExpressionType["ConditionalExpression"] = 6)] =
@@ -24,29 +26,39 @@ var ExpressionType;
     "FunctionExpression";
   ExpressionType[(ExpressionType["GeneratorExpression"] = 9)] =
     "GeneratorExpression";
-  ExpressionType[(ExpressionType["GraphExpression"] = 10)] = "GraphExpression";
+  ExpressionType[(ExpressionType["GraphExpression"] = 10)] =
+    "GraphExpression";
   ExpressionType[(ExpressionType["GraphIndexExpression"] = 11)] =
     "GraphIndexExpression";
-  ExpressionType[(ExpressionType["Identifier"] = 12)] = "Identifier";
-  ExpressionType[(ExpressionType["LetExpression"] = 13)] = "LetExpression";
-  ExpressionType[(ExpressionType["Literal"] = 14)] = "Literal";
+  ExpressionType[(ExpressionType["Identifier"] = 12)] =
+    "Identifier";
+  ExpressionType[(ExpressionType["LetExpression"] = 13)] =
+    "LetExpression";
+  ExpressionType[(ExpressionType["Literal"] = 14)] =
+    "Literal";
   ExpressionType[(ExpressionType["LogicalExpression"] = 15)] =
     "LogicalExpression";
   ExpressionType[(ExpressionType["MemberExpression"] = 16)] =
     "MemberExpression";
-  ExpressionType[(ExpressionType["NewExpression"] = 17)] = "NewExpression";
+  ExpressionType[(ExpressionType["NewExpression"] = 17)] =
+    "NewExpression";
   ExpressionType[(ExpressionType["ObjectExpression"] = 18)] =
     "ObjectExpression";
-  ExpressionType[(ExpressionType["Property"] = 19)] = "Property";
+  ExpressionType[(ExpressionType["Property"] = 19)] =
+    "Property";
   ExpressionType[(ExpressionType["SequenceExpression"] = 20)] =
     "SequenceExpression";
-  ExpressionType[(ExpressionType["ThisExpression"] = 21)] = "ThisExpression";
-  ExpressionType[(ExpressionType["UnaryExpression"] = 22)] = "UnaryExpression";
+  ExpressionType[(ExpressionType["ThisExpression"] = 21)] =
+    "ThisExpression";
+  ExpressionType[(ExpressionType["UnaryExpression"] = 22)] =
+    "UnaryExpression";
   ExpressionType[(ExpressionType["UpdateExpression"] = 23)] =
     "UpdateExpression";
-  ExpressionType[(ExpressionType["YieldExpression"] = 24)] = "YieldExpression";
+  ExpressionType[(ExpressionType["YieldExpression"] = 24)] =
+    "YieldExpression";
 })(ExpressionType || (ExpressionType = {}));
-var ParserExpression = (function() {
+
+let ParserExpression = (function() {
   function ParserExpression(pathConstraints, parameters, smtSolverName) {
     this.pathConstraints = pathConstraints;
     this.parameters = parameters;
@@ -55,8 +67,8 @@ var ParserExpression = (function() {
     this.queueFunctions = [];
   }
   ParserExpression.prototype.parse = function() {
-    var expAST;
-    var sExpressions = [];
+    let expAST;
+    let sExpressions = [];
     try {
       expAST = esprima.parse(this.pathConstraints);
       if (!_.isArray(expAST.body)) {
@@ -92,13 +104,13 @@ var ParserExpression = (function() {
         res: null
       };
     }
-    var cbgetSMTExpr = this.getSMTExpression(sExpressions, this.parameters);
+    let cbgetSMTExpr = this.getSMTExpression(sExpressions, this.parameters);
 
     return { err: cbgetSMTExpr.err, res: cbgetSMTExpr.res };
   };
   ParserExpression.prototype.handleExpression = function(node) {
-    var expNode;
-    var operator;
+    let expNode;
+    let operator;
     try {
       expNode = this.getTypeExpression(node);
     } catch (e) {
@@ -122,7 +134,7 @@ var ParserExpression = (function() {
           operator = node.operator;
         }
         this.updateSExp("(");
-        if (node.operator != "!=") {
+        if (node.operator !== "!=") {
           this.updateSExp(operator + " ");
         } else {
           this.updateSExp("not (=" + " ");
@@ -141,21 +153,21 @@ var ParserExpression = (function() {
           2,
           "CallExpression nodes != 2"
         );
-        var argumentsNode = node[expNode.recursiveNodes[1]];
+        let argumentsNode = node[expNode.recursiveNodes[1]];
         if (!_.isArray(argumentsNode)) {
           throw new Error(
             '[CallExpression] Unable to handle property "arguments". Is not an array'
           );
         }
-        var calleeNode = node[expNode.recursiveNodes[0]];
-        var calleeNodeExp = this.getTypeExpression(calleeNode);
+        let calleeNode = node[expNode.recursiveNodes[0]];
+        let calleeNodeExp = this.getTypeExpression(calleeNode);
         if (calleeNodeExp.type === ExpressionType.Identifier) {
-          var functionName = calleeNode.name;
-          var actualParameters = [];
-          var astFunctionCall;
-          var that = this;
-          for (var k = 0; k < argumentsNode.length; k++) {
-            var astFunctionCall = estraverse.replace(argumentsNode[k], {
+          let functionName = calleeNode.name;
+          let actualParameters = [];
+          let astFunctionCall;
+          let that = this;
+          for (let k = 0; k < argumentsNode.length; k++) {
+            let astFunctionCall = esTraverse.replace(argumentsNode[k], {
               enter: function(node) {
                 if (node.hasOwnProperty("type") && node.type === "Identifier") {
                   if (that.parametersLastExecution.hasOwnProperty(node.name)) {
@@ -164,7 +176,7 @@ var ParserExpression = (function() {
                 }
               }
             });
-            actualParameters.push(escodegen.generate(astFunctionCall));
+            actualParameters.push(esCodeGen.generate(astFunctionCall));
           }
           this.queueFunctions.push({
             name: functionName,
@@ -174,7 +186,7 @@ var ParserExpression = (function() {
         } else {
           this.updateSExp("(");
           this.handleExpression(node[expNode.recursiveNodes[0]]);
-          for (var k = 0; k < argumentsNode.length; k++) {
+          for (let k = 0; k < argumentsNode.length; k++) {
             this.handleExpression(argumentsNode[k]);
             if (k !== argumentsNode.length - 1) {
               this.updateSExp(" ");
@@ -237,13 +249,13 @@ var ParserExpression = (function() {
           "MemberExpression nodes != 2"
         );
         if (!node.computed) {
-          var objectNode = node[expNode.recursiveNodes[0]];
-          var propertyNode = node[expNode.recursiveNodes[1]];
-          var expNodeObject = this.getTypeExpression(objectNode);
-          var expNodeProperty = this.getTypeExpression(propertyNode);
+          let objectNode = node[expNode.recursiveNodes[0]];
+          let propertyNode = node[expNode.recursiveNodes[1]];
+          let expNodeObject = this.getTypeExpression(objectNode);
+          let expNodeProperty = this.getTypeExpression(propertyNode);
           if (expNodeObject.type === ExpressionType.Identifier) {
-            var stringParam = null;
-            for (var k = 0; k < this.parameters.length; k++) {
+            let stringParam = null;
+            for (let k = 0; k < this.parameters.length; k++) {
               if (objectNode.name === this.parameters[k].id) {
                 if (this.parameters[k].type === "String") {
                   stringParam = this.parameters[k];
@@ -334,7 +346,7 @@ var ParserExpression = (function() {
     this.S_Expression += s;
   };
   ParserExpression.prototype.getTypeExpression = function(node) {
-    var expNode = {};
+    let expNode = {};
     if (node.type === "ArrayExpression") {
       expNode.type = ExpressionType.ArrayExpression;
       expNode.recursiveNodes = [];
@@ -416,8 +428,8 @@ var ParserExpression = (function() {
     return expNode;
   };
   ParserExpression.prototype.updateIdentifiers = function(ast) {
-    var that = this;
-    estraverse.traverse(ast, {
+    let that = this;
+    esTraverse.traverse(ast, {
       enter: function(node, parent) {
         if (node.type === "Identifier") {
           if (parent !== null && parent.hasOwnProperty("type")) {
@@ -431,26 +443,23 @@ var ParserExpression = (function() {
       }
     });
   };
-  ParserExpression.prototype.getSMTExpression = function(
-    sExpressions,
-    parameters
-  ) {
-    var smtExpression = "";
-    var regExpFuncCall;
-    var functionName;
-    var newSExpression;
-    var functionToExecute;
-    var that = this;
+  ParserExpression.prototype.getSMTExpression = function(sExpressions, parameters) {
+    let smtExpression = "";
+    let regExpFuncCall;
+    let functionName;
+    let newSExpression;
+    let functionToExecute;
+    let that = this;
     smtExpression += this.getDeclarationPart(parameters);
-    for (var k = 0; k < sExpressions.length; k++) {
-      var functions = sExpressions[k].match(/<exec=([a-zA-Z0-9_]+)>/g);
+    for (let k = 0; k < sExpressions.length; k++) {
+      let functions = sExpressions[k].match(/<exec=([a-zA-Z0-9_]+)>/g);
       if (functions === null || functions.length === 0) {
         smtExpression += "(assert " + sExpressions[k] + ")\n";
       }
     }
-    for (var k = 0; k < sExpressions.length; k++) {
+    for (let k = 0; k < sExpressions.length; k++) {
       !(function(sExp, isLast) {
-        var functions = sExp.match(/<exec=([a-zA-Z0-9_]+)>/g);
+        let functions = sExp.match(/<exec=([a-zA-Z0-9_]+)>/g);
         if (functions !== null && functions.length > 0) {
           smtExpression += "(assert " + res + ")\n";
           if (isLast) {
@@ -471,8 +480,8 @@ var ParserExpression = (function() {
     return { err: null, res: smtExpression };
   };
   ParserExpression.prototype.getDeclarationPart = function(parameters) {
-    var decPart = [];
-    for (var k = 0; k < parameters.length; k++) {
+    let decPart = [];
+    for (let k = 0; k < parameters.length; k++) {
       if (
         parameters[k].symbolicallyExecute &&
         this.identifiers.indexOf(parameters[k].id) !== -1
@@ -485,9 +494,9 @@ var ParserExpression = (function() {
     return decPart.join("\n") + "\n";
   };
   ParserExpression.prototype.getModelPart = function(parameters) {
-    var parametersIds = [];
-    var identifierToSolve = "";
-    for (var k = 0; k < parameters.length; k++) {
+    let parametersIds = [];
+    let identifierToSolve = "";
+    for (let k = 0; k < parameters.length; k++) {
       parametersIds.push(parameters[k].id);
     }
     identifierToSolve = _.filter(this.identifiers, function(id) {
@@ -496,8 +505,8 @@ var ParserExpression = (function() {
     return identifierToSolve;
   };
   ParserExpression.prototype.getFunctionToCall = function(functionName) {
-    var retValue = null;
-    for (var k = 0; k < this.queueFunctions.length; k++) {
+    let retValue = null;
+    for (let k = 0; k < this.queueFunctions.length; k++) {
       if (this.queueFunctions[k].name === functionName) {
         retValue = this.queueFunctions[k];
         this.queueFunctions.splice(k, 1);

@@ -1,12 +1,10 @@
-"use strict";
+const _ = require("underscore");
+const ParserExpression = require("./smt-wrapper/parser-expression");
+const SMTSolver = require("./smt-wrapper/smt-solver");
+const sUtils = require("./symbolic-execution-utils");
 
-var _ = require("underscore");
-var ParserExpression = require("./smt-wrapper/parser-expression");
-var SMTSolver = require("./smt-wrapper/smt-solver");
-var sUtils = require("./symbolic-execution-utils");
-
-var SymbolicExecution = (function() {
-  function SymbolicExecution(uParameters, solver) {
+const SymbolicExecution = (function() {
+  function SE(uParameters, solver) {
     this.response = {};
     this.response.errors = [];
     this.response.testCases = [];
@@ -14,10 +12,9 @@ var SymbolicExecution = (function() {
     this.uParameters = uParameters;
     this.smtSolver = new SMTSolver(solver.name, solver.path, solver.tmpPath);
   }
-  SymbolicExecution.prototype.solvePathConstraint = function(pathConstraint) {
-    var that = this;
-    var params = [];
-    for (var pName in this.uParameters) {
+  SE.prototype.solvePathConstraint = function(pathConstraint) {
+    let params = [];
+    for (let pName in this.uParameters) {
       if (this.uParameters.hasOwnProperty(pName)) {
         params.push({
           id: pName,
@@ -27,41 +24,40 @@ var SymbolicExecution = (function() {
         });
       }
     }
-    var parserExpression = new ParserExpression(
+    let parserExpression = new ParserExpression(
       pathConstraint,
       params,
       this.smtSolver.getName()
     );
-    var that = this;
     try {
-      var cbparse = parserExpression.parse();
-      if (cbparse.err) {
-        var errorMessage;
-        if (cbparse.err instanceof Error) {
-          errorMessage = cbparse.err.message;
+      let callbackParse = parserExpression.parse();
+      if (callbackParse.err) {
+        let errorMessage;
+        if (callbackParse.err instanceof Error) {
+          errorMessage = callbackParse.err.message;
         } else {
           errorMessage = "Error while parsing expression";
         }
-        that.response.errors.push(errorMessage);
+        this.response.errors.push(errorMessage);
         return { err: errorMessage, res: null };
       } else {
-        smtResponse = cbparse.res;
+        let smtResponse = callbackParse.res;
         console.log(smtResponse);
-        var cbSmtSolverRun = that.smtSolver.run(smtResponse);
+        let cbSmtSolverRun = this.smtSolver.run(smtResponse);
         if (cbSmtSolverRun.err) {
-          that.response.errors.push("Unable to run SMT expression");
+          this.response.errors.push("Unable to run SMT expression");
           return { err: true, res: null };
         } else {
-          var smtResponse = that.smtSolver.parseResponse(cbSmtSolverRun.res);
-          that.response.results.push(smtResponse);
+          let smtResponse = this.smtSolver.parseResponse(cbSmtSolverRun.res);
+          this.response.results.push(smtResponse);
           return { err: false, res: smtResponse };
         }
       }
     } catch (e) {
-      that.response.errors.push(e.message);
+      this.response.errors.push(e.message);
       return { err: true, res: null };
     }
   };
-  return SymbolicExecution;
+  return SE;
 })();
 module.exports = SymbolicExecution;

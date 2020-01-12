@@ -1,9 +1,8 @@
-"use strict";
-var fs = require("fs");
+const fs = require("fs");
 
 function fileExists(file) {
-  var statFile;
-  var ret;
+  let statFile;
+  let ret;
   try {
     statFile = fs.statSync(file);
     ret = statFile.isFile();
@@ -15,8 +14,8 @@ function fileExists(file) {
 exports.fileExists = fileExists;
 
 function pathExists(path) {
-  var statFile;
-  var ret;
+  let statFile;
+  let ret;
   try {
     statFile = fs.statSync(path);
     ret = statFile.isDirectory();
@@ -38,7 +37,7 @@ exports.readFile = readFile;
 
 function writeOnFile(file, content, encoding) {
   encoding = encoding || "utf8";
-  var writeSync = fs.writeFileSync(file, content, { encoding: encoding });
+  let writeSync = fs.writeFileSync(file, content, { encoding: encoding });
   return writeSync === undefined;
 }
 exports.writeOnFile = writeOnFile;
@@ -47,7 +46,7 @@ function removeFile(file) {
   if (!fileExists(file)) {
     return false;
   }
-  var unlinkSync = fs.unlinkSync(file);
+  let unlinkSync = fs.unlinkSync(file);
   return unlinkSync === undefined;
 }
 exports.removeFile = removeFile;
